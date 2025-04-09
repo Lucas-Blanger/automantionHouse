@@ -1,23 +1,52 @@
+#include <RCSwitch.h>
+
+RCSwitch rf = RCSwitch();
+const int TRANSMIT_PIN = 10;
+const int DATA_BITS = 28;
+const unsigned long CODE_TO_SEND = 194111141;
+const int REPEAT_TRANSMITS = 15;
+const int PULSE_LENGTH_US = 463;
+const int PROTOCOL_NUMBER = 6;
 int IRledPin = 13; 
 
 void setup() {
   pinMode(IRledPin, OUTPUT);
   Serial.begin(9600);
+  rf.enableTransmit(TRANSMIT_PIN);
+  rf.setProtocol(PROTOCOL_NUMBER);
+  rf.setPulseLength(PULSE_LENGTH_US);
+  rf.setRepeatTransmit(REPEAT_TRANSMITS);
+}
 
-  Serial.println("Enviando sinal IR...");
-  //SendChannelUpCode();
-  //SendChannelUpCodeDesligar();
-  //SendChannelUpCodeAumentar();
-  //SendChannelUpCodeDiminuir();
-  //SendChannelUpCodeDesligar();
-  //SendChannelUpCodeLigarTV();
-  SendChannelUpCodeDesligarTV();
-  //SendChannelUpCodeAumentarTV();
-  //SendChannelUpCodeDiminuirTV();
+void enviarSinalRF() {
+  rf.send(CODE_TO_SEND, DATA_BITS);
+  Serial.println("Sinal enviado!");
 }
 
 void loop() {
+  if (Serial.available()) {
+    String comando = Serial.readStringUntil('\n');
+    if (comando == "LIGAR") {
+      SendChannelUpCode();
+    } else if (comando == "DESLIGAR") {
+      SendChannelUpCodeDesligar();
+    } else if (comando == "AUMENTARAR") {
+          SendChannelUpCodeAumentar();
+    } else if (comando == "DIMINUIRAR") {
+          SendChannelUpCodeDiminuir();
+    } else if (comando == "LIGARTV") {
+          SendChannelUpCodeLigarTV();
+    } else if (comando == "DESLIGARTV") {
+          SendChannelUpCodeDesligarTV();
+    } else if (comando == "AUMENTARTV") {
+          SendChannelUpCodeAumentarTV();
+    }  else if (comando == "DIMINUIRTV") {
+          SendChannelUpCodeDiminuirTV();
+    } else if (comando == "LIGARLUZ") {
+          enviarSinalRF();
+    }
 }
+  
 
 
 void pulseIR(long microsecs) {
