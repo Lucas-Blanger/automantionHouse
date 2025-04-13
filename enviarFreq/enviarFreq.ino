@@ -4,7 +4,7 @@ RCSwitch rf = RCSwitch();
 const int TRANSMIT_PIN = 10;
 const int DATA_BITS = 28;
 const unsigned long CODE_TO_SEND = 194111141;
-const int REPEAT_TRANSMITS = 15;
+const int REPEAT_TRANSMITS = 7;
 const int PULSE_LENGTH_US = 463;
 const int PROTOCOL_NUMBER = 6;
 int IRledPin = 13; 
@@ -45,6 +45,7 @@ void loop() {
     } else if (comando == "LIGARLUZ") {
           enviarSinalRF();
     }
+}
 }
   
 

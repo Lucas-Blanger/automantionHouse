@@ -1,26 +1,48 @@
-import serial
+import sounddevice as sd
+import numpy as np
 import speech_recognition as sr
+import serial
 import time
+import io
+import wave
 
-arduino = serial.Serial("COM3", 9600)
+arduino = serial.Serial("/dev/ttyUSB0", 9600)
 time.sleep(2)
 
 
-def ouvirComando():
-    r = sr.Recognizer()
-    with sr.Microphone() as source:
-        print("Diga um comando (ex: 'ligar ar' ou 'desligar ar')...")
-        audio = r.listen(source)
+def gravar_audio(duracao=6, fs=16000):
+    print("Gravando... Fale agora!")
+    audio = sd.rec(int(duracao * fs), samplerate=fs, channels=1, dtype="int16")
+    sd.wait()
+    print("Gravação finalizada.")
+    return audio, fs
 
-        try:
-            comando = r.recognize_google(audio, language="pt-BR").lower()
-            print(f"Comando reconhecido: {comando}")
-            return comando
-        except sr.UnknownValueError:
-            print("Não entendi o que foi dito.")
-        except sr.RequestError:
-            print("Erro ao acessar o serviço de reconhecimento de voz.")
-        return ""
+
+def audio_para_audioData(audio_np, fs):
+    buffer = io.BytesIO()
+    with wave.open(buffer, "wb") as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(fs)
+        wf.writeframes(audio_np.tobytes())
+    buffer.seek(0)
+    return sr.AudioData(buffer.read(), fs, 2)
+
+
+def ouvirComando():
+    audio_np, fs = gravar_audio()
+    audio_data = audio_para_audioData(audio_np, fs)
+
+    recognizer = sr.Recognizer()
+    try:
+        comando = recognizer.recognize_google(audio_data, language="pt-BR").lower()
+        print(f"Comando reconhecido: {comando}")
+        return comando
+    except sr.UnknownValueError:
+        print("Não entendi o que foi dito.")
+    except sr.RequestError:
+        print("Erro ao acessar o serviço de reconhecimento de voz.")
+    return ""
 
 
 def enviarComando(comando):
@@ -36,16 +58,16 @@ def enviarComando(comando):
     elif "diminuir ar" in comando:
         arduino.write(b"DIMINUIRAR\n")
         print("Enviado: DIMINUIRAR")
-    elif "ligar TV" in comando:
+    elif "ligar tv" in comando:
         arduino.write(b"LIGARTV\n")
-        print("Enviado:LIGARTV")
-    elif "desligar TV" in comando:
+        print("Enviado: LIGARTV")
+    elif "desligar tv" in comando:
         arduino.write(b"DESLIGARTV\n")
         print("Enviado: DESLIGARTV")
-    elif "aumentar TV" in comando:
+    elif "aumentar tv" in comando:
         arduino.write(b"AUMENTARTV\n")
         print("Enviado: AUMENTARTV")
-    elif "diminuir TV" in comando:
+    elif "diminuir tv" in comando:
         arduino.write(b"DIMINUIRTV\n")
         print("Enviado: DIMINUIRTV")
     elif "ligar luz" in comando:
@@ -55,6 +77,7 @@ def enviarComando(comando):
         print("Comando não reconhecido para envio.")
 
 
+# Loop principal
 while True:
     comando = ouvirComando()
     enviarComando(comando)
